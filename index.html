@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Constant MBAILASSEM - Digital Business Card</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -287,9 +292,16 @@
             height: 22px;
             fill: #2e7d32;
         }
-
-        .save-contact {
+        
+        /* ⬇️ MODIFIED: Grouping all action buttons together for consistent styling */
+        .action-buttons {
+            display: flex;
+            flex-direction: column; /* Stack buttons vertically */
+            gap: 10px; /* Space between buttons */
             margin: 20px 30px;
+        }
+
+        .action-button {
             padding: 15px;
             background: linear-gradient(135deg, #2e7d32 0%, #388e3c 50%, #4caf50 100%);
             color: white;
@@ -299,26 +311,32 @@
             font-weight: 600;
             transition: all 0.3s;
             border: none;
-            width: calc(100% - 60px);
+            width: 100%;
             font-size: 16px;
             box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        .save-contact:hover {
+        .action-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 16px rgba(76, 175, 80, 0.5);
         }
 
+        /* ⬇️ NEW: Style for the separate download buttons to differentiate */
+        .download-button {
+            background: linear-gradient(135deg, #388e3c 0%, #4caf50 100%); /* Slightly different gradient */
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
         .eco-badge {
             position: absolute;
-            top: 15px;
+            top: 13px;
             right: 15px;
             background: rgba(255, 255, 255, 0.9);
-            padding: 18px 25px;
-            border-radius: 50%;
-            font-size: 50px;
+            padding: 8px 25px;
+            border-radius: 10%;
+            font-size: 5px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             z-index: 2;
             -webkit-font-smoothing: antialiased;
@@ -355,7 +373,7 @@
                 max-width: none;
             }
 
-            .save-contact {
+            .action-buttons { /* Hide action buttons on print */
                 display: none;
             }
         }
@@ -374,7 +392,7 @@
                 </select>
             </div>
             <div class="eco-badge">
-                <img src="logo.png" alt="Eco Logo" style="width: 30px; height: 30px; border-radius: 50%;">
+                <img src="logo-v.png" alt="Eco Logo" style="width: 60px;">
             </div>
 
             <div class="profile-img">CM</div>
@@ -411,8 +429,9 @@
                 </div>
                 <div class="info-content">
                     <div class="info-label" data-en="Phone" data-fr="Téléphone" data-ar="الهاتف" data-es="Teléfono">Phone</div>
-                    <div class="info-value"><a href="tel:+15559876543">+250 790 040 651</a> /
-                        <a href="tel:+15551234567">+235 664 012 76</a>
+                    <div class="info-value">
+                        <span id="phone1-value" >+250 790 040 651</span> /
+                        <span id="phone2-value">+235 664 012 76</span>
                     </div>
                 </div>
             </div>
@@ -426,7 +445,7 @@
                 </div>
                 <div class="info-content">
                     <div class="info-label" data-en="Location" data-fr="Localisation" data-ar="الموقع" data-es="Ubicación">Location</div>
-                    <div class="info-value">Kigali, RW</div>
+                    <div class="info-value" id="location-value">Kigali, RW</div>
                 </div>
             </div>
 
@@ -473,8 +492,8 @@
 
                 <div style="text-align: center; margin-top: 20px;">
                     <button style="padding: 12px 20px; background: linear-gradient(135deg, #2e7d32 0%, #388e3c 50%, #4caf50 100%);
-                                     color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;
-                                     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);">
+                                    color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;
+                                    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);">
                         <a href="mailto:mbailassemc@yahoo.fr" style="color: white; text-decoration: none;"><span id="email-btn-text" data-en="📧 Email Me" data-fr="📧 Envoyez-moi un e-mail" data-ar="📧 أرسل لي بريدًا إلكترونيًا" data-es="📧 Envíame un Correo">📧
                                 Email Me</span>
                         </a>
@@ -484,6 +503,27 @@
             </div>
 
         </div>
+        
+        <div class="action-buttons">
+            <button class="action-button" onclick="downloadVCard()">
+                <span id="save-vcard-text" data-en="💾 Save Contact to Phone" data-fr="💾 Enregistrer le Contact (vCard)" data-ar="💾 حفظ جهة الاتصال (vCard)" data-es="💾 Guardar Contacto (vCard)">
+                    💾 Save Contact to Phone
+                </span>
+            </button>
+            
+            <button class="action-button download-button" onclick="downloadCard('pdf')">
+                <span id="download-pdf-text" data-en="📄 Download Card as PDF" data-fr="📄 Télécharger la Carte en PDF" data-ar="📄 تنزيل البطاقة كملف PDF" data-es="📄 Descargar Tarjeta en PDF">
+                    📄 Download Card as PDF
+                </span>
+            </button>
+            
+            <button class="action-button download-button" onclick="downloadCard('png')">
+                <span id="download-image-text" data-en="🖼️ Download Card as Image" data-fr="🖼️ Télécharger la Carte en Image" data-ar="🖼️ تنزيل البطاقة كصورة" data-es="🖼️ Descargar Tarjeta como Imagen">
+                    🖼️ Download Card as Image
+                </span>
+            </button>
+        </div>
+        
         <div class="social-links">
             <a href="https://www.linkedin.com/in/constant-mbailassem-a6a8b075/" class="social-btn" target="_blank" title="LinkedIn">
                 <svg viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
@@ -494,12 +534,11 @@
             <a href="https://www.instagram.com/mbailassemconstant/" class="social-btn" target="_blank" title="Instagram">
                 <svg viewBox="0 0 24 24"><path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>
             </a>
-            <!-- Facebook -->
             <a href="https://www.facebook.com/mbailassem" class="social-btn" target="_blank" title="Facebook">
                 <svg viewBox="0 0 24 24"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.99 3.66 9.13 8.44 9.88v-6.99h-2.54v-2.89h2.54V9.41c0-2.51 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.87h2.78l-.44 2.89h-2.34v6.99C18.34 21.13 22 16.99 22 12z"/></svg>
             </a>
         </div>
-        </div>
+    </div>
 
     <script>
         // Mapping of all translatable elements using data-attributes
@@ -516,7 +555,12 @@
             'expertise-list': document.querySelectorAll('ul li'),
             'contact-heading': document.getElementById('contact-heading'),
             'contact-text': document.getElementById('contact-text'),
-            'email-btn-text': document.getElementById('email-btn-text')
+            'email-btn-text': document.getElementById('email-btn-text'),
+            
+            // ⬇️ NEW: Translation keys for new buttons
+            'save-vcard-text': document.getElementById('save-vcard-text'),
+            'download-pdf-text': document.getElementById('download-pdf-text'),
+            'download-image-text': document.getElementById('download-image-text')
         };
         
         // Function to set the document's text direction based on the language
@@ -525,12 +569,10 @@
             document.documentElement.lang = lang;
             document.body.dir = isRTL ? 'rtl' : 'ltr';
             
-            // Adjust card alignment for RTL if needed, though the current layout is central
+            // Adjust card alignment for RTL
             const card = document.querySelector('.card');
             if (card) {
-                // For a right-aligned text heavy card, you'd apply text-align: right
-                // But for this central card, we only apply text-align to the body content if needed
-                card.style.textAlign = isRTL ? 'right' : 'justify';
+                card.style.textAlign = 'justify';
             }
             
             // Specifically adjust the list for RTL
@@ -567,12 +609,95 @@
                 }
             }
         }
+        
+        // ⬇️ NEW: Function to generate and download the VCF (vCard) file
+        function downloadVCard() {
+            const firstName = "Constant";
+            const lastName = "MBAILASSEM";
+            const email = "mbailassemc@yahoo.fr";
+            const phone1 = document.getElementById('phone1-value').textContent.trim();
+            const phone2 = document.getElementById('phone2-value').textContent.trim();
+            const jobTitle = document.querySelector('.title').textContent.trim();
+            const company = document.getElementById('company-name').textContent.trim();
+            const location = document.getElementById('location-value').textContent.trim();
 
-        // Initialize the card with the default language (English)
+            const vCardData = `BEGIN:VCARD
+VERSION:3.0
+N:${lastName};${firstName};;;
+FN:${firstName} ${lastName}
+TITLE:${jobTitle}
+ORG:${company}
+ADR;TYPE=WORK:;;;${location};;;
+EMAIL;TYPE=INTERNET:${email}
+TEL;TYPE=WORK,VOICE:${phone1}
+TEL;TYPE=WORK,VOICE:${phone2}
+END:VCARD`;
+
+            const blob = new Blob([vCardData], { type: 'text/vcard;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'Constant_MBAILASSEM.vcf');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ⬇️ NEW: Function to download the card as PDF or PNG using html2canvas/jsPDF
+        async function downloadCard(format) {
+            const input = document.getElementById('cardToCapture');
+            
+            // The card element itself has a backdrop-filter, which can complicate capturing.
+            // Temporarily disable the backdrop-filter on the card during capture to ensure better rendering.
+            const originalBackdrop = input.style.backdropFilter;
+            input.style.backdropFilter = 'none';
+
+            // html2canvas options to improve rendering quality
+            const canvas = await html2canvas(input, {
+                scale: 2, // Increase scale for higher resolution
+                useCORS: true, // Important if the logo.png or background image is cross-origin
+                allowTaint: true // Allow rendering content that might "taint" the canvas
+            });
+
+            // Restore original styles
+            input.style.backdropFilter = originalBackdrop;
+
+            if (format === 'png') {
+                // Download as PNG image
+                const imgData = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = imgData;
+                link.download = 'Constant_MBAILASSEM_Card.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else if (format === 'pdf') {
+                // Download as PDF
+                const imgData = canvas.toDataURL('image/jpeg', 1.0); // Use JPEG for smaller PDF size
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const imgWidth = 100; // Width in mm (example: 100mm, about half an A4 page)
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                let heightLeft = imgHeight;
+                let position = 10; // Starting position from the top (10mm margin)
+
+                // Add the image to the PDF
+                pdf.addImage(imgData, 'JPEG', 55, position, imgWidth, imgHeight);
+
+                pdf.save('Constant_MBAILASSEM_Card.pdf');
+            }
+        }
+
+        // Initialize the card with the default language (French - 'fr' is selected in the HTML)
         document.addEventListener('DOMContentLoaded', () => {
             translateCard(document.getElementById('language-dropdown').value);
         });
     </script>
-    </body>
+</body>
 
 </html>
